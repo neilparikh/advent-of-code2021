@@ -1,6 +1,5 @@
 import Data.List
-
-type Board = [[String]]
+import Util
 
 main :: IO ()
 main = do
@@ -9,6 +8,8 @@ main = do
   print $ part1 numbersCalled boards
   print $ part2 numbersCalled boards
   return ()
+
+type Board = [[String]]
 
 part1 :: [String] -> [Board] -> Int
 part1 (x:xs) boards = let
@@ -36,14 +37,3 @@ checkWin b
   | any (all (== "")) b = True
   | any (all (== "")) . transpose $ b = True
   | otherwise = False
-
-wordsBy f s = case dropWhile f s of
-  "" -> []
-  s' -> w : wordsBy f s''
-    where (w, s'') = break f s'
-
-chunksOf :: Int -> [a] -> [[a]]
-chunksOf _ [] = []
-chunksOf n l
-  | n > 0 = take n l : chunksOf n (drop n l)
-  | otherwise = error "Negative or zero n"
