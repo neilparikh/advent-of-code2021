@@ -18,3 +18,6 @@ listToTuple _ = error "list does not have exactly 2 elems"
 
 prod :: [a] -> [b] -> [(a, b)]
 prod a b = [(x, y) | x <- a, y <- b]
+
+applyNTimes :: Int -> (a -> a) -> a -> a
+applyNTimes n f = foldr (.) id (replicate n f)
