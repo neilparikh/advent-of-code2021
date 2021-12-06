@@ -1,9 +1,6 @@
 import Util
 import qualified Data.IntMap.Strict as IM
-import Debug.Trace
-
--- TODO: Just switch to using assoc list instead of bothing
--- with IntMap, since there's only 9 keys
+import Data.Maybe (fromMaybe)
 
 main :: IO ()
 main = do
@@ -13,7 +10,7 @@ main = do
   print $ IM.foldr (+) 0 $ applyNTimes 256 sim2 startMap
 
 inputToMap :: [Int] -> IM.IntMap Integer
-inputToMap ls = foldl (\m x -> IM.adjust (+ 1) x m) (IM.fromList (zip [0..8] (repeat 0))) ls
+inputToMap ls = foldl (\m x -> IM.insertWith (+) x 1 m) IM.empty ls
 
 sim :: [Int] -> [Int]
 sim fish = let
@@ -23,6 +20,6 @@ sim fish = let
 
 sim2 :: IM.IntMap Integer -> IM.IntMap Integer
 sim2 m = let
-  numNew = m IM.! 0
-  newM = IM.fromListWith (+) $ fmap (\(k, v) -> (if k == 0 then 6 else k - 1, v)) $ IM.toList m
-  in IM.insertWith (+) 8 numNew newM
+  newFish = fromMaybe 0 . IM.lookup 0 $ m
+  m' = IM.mapKeysWith (+) (\k -> if k == 0 then 6 else k - 1) m
+  in IM.insert 8 newFish m'
