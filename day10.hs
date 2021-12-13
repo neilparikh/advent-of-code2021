@@ -31,14 +31,14 @@ part1 = sum . fmap (score . head . snd)
     _ -> error "Should not happen"
 
 part2 :: [(String, String)] -> Int
-part2 = median . sort . fmap (score . fmap openToClose . fst)
+part2 = median . sort . fmap (score . fst)
   where
   score = foldl (\acc x -> acc * 5 + scorePer x) 0
   scorePer c = case c of
-    ')' -> 1
-    ']' -> 2
-    '}' -> 3
-    '>' -> 4
+    '(' -> 1
+    '[' -> 2
+    '{' -> 3
+    '<' -> 4
     _ -> error "Should not happen"
 
 isOpen :: Char -> Bool
@@ -50,12 +50,4 @@ closeToOpen c = case c of
   ']' -> '['
   ')' -> '('
   '}' -> '{'
-  _ -> error "Should not happen"
-
-openToClose :: Char -> Char
-openToClose c = case c of
-  '<' -> '>'
-  '[' -> ']'
-  '(' -> ')'
-  '{' -> '}'
   _ -> error "Should not happen"

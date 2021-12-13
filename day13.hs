@@ -14,7 +14,7 @@ part1 points folds = length . nub . applyFold points . head $ folds
 part2 :: [(Int, Int)] -> [(String, Int)] -> String
 part2 points folds = let
   dots = nub $ foldl applyFold points folds
-  (maxX, maxY) = bimap (maximum . fmap fst) (maximum . fmap snd) $ (dots, dots)
+  (maxX, maxY) = bimap maximum maximum . unzip $ dots
   grid = transpose . chunksOf (maxY + 1) $ prod [0..maxX] [0..maxY]
   in plot dots grid
 
