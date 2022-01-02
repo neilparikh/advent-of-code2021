@@ -1,5 +1,6 @@
 module Util where
 import Control.Arrow ((&&&))
+import Control.Monad ((>=>))
 
 wordsBy :: (a -> Bool) -> [a] -> [[a]]
 wordsBy f s = case dropWhile f s of
@@ -23,6 +24,9 @@ prod a b = [(x, y) | x <- a, y <- b]
 applyNTimes :: Int -> (a -> a) -> a -> a
 applyNTimes n f = foldr (.) id (replicate n f)
 
+applyNTimesM :: (Monad m) => Int -> (a -> m a) -> a -> m a
+applyNTimesM n f = foldr (>=>) return (replicate n f)
+
 fmapWithTag :: Functor f => (a -> b) -> f a -> f (a, b)
 fmapWithTag f = fmap (id &&& f)
 
@@ -43,3 +47,6 @@ median xs
     l = length xs
     m = l `div` 2
     in xs !! m
+
+converge :: (Eq a) => (a -> a) -> a -> a
+converge f x = let x' = f x in (if x == x' then x else converge f x')

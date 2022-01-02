@@ -3,10 +3,6 @@ import Data.Maybe (catMaybes)
 import Data.List (sort)
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
-import Debug.Trace
-
-t :: (Show a) => a -> a
-t = traceShowId
 
 main :: IO ()
 main = do
@@ -16,7 +12,6 @@ main = do
   let lowPts = M.filterWithKey (isLow heightMap) $ heightMap
   print $ sum . fmap succ . M.elems $ lowPts
   print $ product . take 3 . reverse . sort . fmap (basinSize heightMap) . M.keys $ lowPts
-  return ()
 
 isLow :: M.Map (Int, Int) Int -> (Int, Int) -> Int -> Bool
 isLow m (x, y) h = let
