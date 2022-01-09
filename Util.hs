@@ -1,12 +1,17 @@
 module Util where
 import Control.Arrow ((&&&))
 import Control.Monad ((>=>))
+import Data.Function (on)
+import Data.List (groupBy)
 
 wordsBy :: (a -> Bool) -> [a] -> [[a]]
 wordsBy f s = case dropWhile f s of
   [] -> []
   s' -> w : wordsBy f s''
     where (w, s'') = break f s'
+
+wordsOn :: (Eq a) => a -> [a] -> [[a]]
+wordsOn x = wordsBy (== x)
 
 chunksOf :: Int -> [a] -> [[a]]
 chunksOf _ [] = []
@@ -50,3 +55,6 @@ median xs
 
 converge :: (Eq a) => (a -> a) -> a -> a
 converge f x = let x' = f x in (if x == x' then x else converge f x')
+
+groupOn :: (Eq b) => (a -> b) -> [a] -> [[a]]
+groupOn f = groupBy ((==) `on` f)
