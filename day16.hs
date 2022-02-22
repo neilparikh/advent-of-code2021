@@ -1,5 +1,3 @@
--- TODO: remove len from Packet ADT
--- Instead, just have PacketParser return (Packer, Int)
 import Text.Parsec
 import ParsecUtil
 import Data.Char (digitToInt)
@@ -7,57 +5,54 @@ import Data.Char (digitToInt)
 main :: IO ()
 main = do
   input <- fmap (hexToBinary . head . lines) $ readFile "day16.in"
-  let (Right packet) = applyParser packetParser input
+  let (Right (_, packet)) = applyParser packetParser input
   print $ versionSum packet
   print $ calcValue packet
   return ()
 
 versionSum :: Packet -> Int
-versionSum (Lit _ version _ _) = version
-versionSum (Operator _ version _ ps_) = version + (sum $ fmap versionSum ps_)
+versionSum (Lit version _ _) = version
+versionSum (Operator version _ ps) = version + (sum $ fmap versionSum ps)
 
 calcValue :: Packet -> Int
-calcValue (Lit _ _ _ v) = v
-calcValue (Operator _ _ 0 ps) = sum $ fmap calcValue ps
-calcValue (Operator _ _ 1 ps) = product $ fmap calcValue ps
-calcValue (Operator _ _ 2 ps) = minimum $ fmap calcValue ps
-calcValue (Operator _ _ 3 ps) = maximum $ fmap calcValue ps
-calcValue (Operator _ _ 5 [a, b]) = if (calcValue a) > (calcValue b) then 1 else 0
-calcValue (Operator _ _ 6 [a, b]) = if (calcValue a) < (calcValue b) then 1 else 0
-calcValue (Operator _ _ 7 [a, b]) = if (calcValue a) == (calcValue b) then 1 else 0
+calcValue (Lit _ _ v) = v
+calcValue (Operator _ 0 ps) = sum $ fmap calcValue ps
+calcValue (Operator _ 1 ps) = product $ fmap calcValue ps
+calcValue (Operator _ 2 ps) = minimum $ fmap calcValue ps
+calcValue (Operator _ 3 ps) = maximum $ fmap calcValue ps
+calcValue (Operator _ 5 [a, b]) = if (calcValue a) > (calcValue b) then 1 else 0
+calcValue (Operator _ 6 [a, b]) = if (calcValue a) < (calcValue b) then 1 else 0
+calcValue (Operator _ 7 [a, b]) = if (calcValue a) == (calcValue b) then 1 else 0
 
-data Packet = Lit { len :: Int, version :: Int, typeID :: Int, value :: Int }
-            | Operator { len :: Int, version :: Int, typeID :: Int, ps :: [Packet] }
+data Packet = Lit { version :: Int, typeID :: Int, value :: Int }
+            | Operator { version :: Int, typeID :: Int, ps :: [Packet] }
             deriving Show
 
-binDigit :: Parser Char
-binDigit = char '0' <|> char '1'
-
-packetParser :: Parser Packet
+packetParser :: Parser (Int, Packet)
 packetParser = do
   version <- fmap toDec $ count 3 binDigit
   typeID <- fmap toDec $ count 3 binDigit
   if typeID == 4 then do
     (value, l) <- parseValue
-    return $ Lit (6 + l) version typeID (toDec value)
+    return $ (6 + l, Lit version typeID (toDec value))
   else do
     lengthTypeID <- binDigit
     if lengthTypeID == '0' then do
       subPacketLength <- fmap toDec $ count 15 binDigit
       subPackets <- lenSubPacketParser subPacketLength
       let newLen = 22 + subPacketLength
-      return $ Operator newLen version typeID subPackets
+      return $ (newLen, Operator version typeID subPackets)
     else do
       numSubPackets <- fmap toDec $ count 11 binDigit
       subPackets <- count numSubPackets packetParser
-      let newLen = 18 + (sum $ fmap len subPackets)
-      return $ Operator newLen version typeID subPackets
+      let newLen = 18 + (sum $ fmap fst subPackets)
+      return $ (newLen, Operator version typeID (fmap snd subPackets))
 
 lenSubPacketParser :: Int -> Parser [Packet]
 lenSubPacketParser 0 = return []
 lenSubPacketParser n = do
-  p <- packetParser
-  rest <- lenSubPacketParser (n - (len p))
+  (l, p) <- packetParser
+  rest <- lenSubPacketParser (n - l)
   return (p:rest)
 
 parseValue :: Parser (String, Int)
@@ -71,6 +66,9 @@ parseValue = do
 
 toDec :: String -> Int
 toDec = foldl (\acc x -> acc * 2 + digitToInt x) 0
+
+binDigit :: Parser Char
+binDigit = char '0' <|> char '1'
 
 hexToBinary :: String -> String
 hexToBinary = concatMap single
