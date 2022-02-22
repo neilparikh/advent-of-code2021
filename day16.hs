@@ -5,7 +5,7 @@ import Control.Monad (guard)
 
 main :: IO ()
 main = do
-  input <- fmap (hexToBinary . head . lines) $ readFile "day16.in"
+  input <- (hexToBinary . head . lines) <$> readFile "day16.in"
   let (Right p) = applyParser packet input
   print $ versionSum p
   print $ calcValue p
@@ -13,7 +13,7 @@ main = do
 
 versionSum :: Packet -> Int
 versionSum (Lit version _) = version
-versionSum (Operator version _ ps) = version + (sum $ fmap versionSum ps)
+versionSum (Operator version _ ps) = version + (sum (versionSum <$> ps))
 
 calcValue :: Packet -> Int
 calcValue (Lit _ v) = v
@@ -31,22 +31,22 @@ data Packet = Lit { version :: Int, v :: Int }
 
 packet :: Parser Packet
 packet = do
-  version <- fmap toDec $ count 3 binDigit
-  typeID <- fmap toDec $ count 3 binDigit
+  version <- toDec <$> count 3 binDigit
+  typeID <- toDec <$> count 3 binDigit
   if typeID == 4 then do
     v <- toDec <$> value
     return $ Lit version v
   else do
     lengthTypeID <- binDigit
     if lengthTypeID == '0' then do
-      subPacketLength <- fmap toDec $ count 15 binDigit
+      subPacketLength <- toDec <$> count 15 binDigit
       startPos <- sourceColumn <$> getPosition
       subPackets <- manyTill packet $ do
         endPos <- sourceColumn <$> getPosition
         guard (endPos - startPos == subPacketLength)
       return $ Operator version typeID subPackets
     else do
-      numSubPackets <- fmap toDec $ count 11 binDigit
+      numSubPackets <- toDec <$> count 11 binDigit
       subPackets <- count numSubPackets packet
       return $ Operator version typeID subPackets
 
@@ -54,10 +54,7 @@ value :: Parser String
 value = do
   prefix <- binDigit
   d <- count 4 binDigit
-  if (prefix == '1') then do
-    d' <- value
-    return $ d ++ d'
-  else return d
+  if (prefix == '1') then (d ++) <$> value else return d
 
 toDec :: String -> Int
 toDec = foldl (\acc x -> acc * 2 + digitToInt x) 0
