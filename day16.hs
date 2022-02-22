@@ -11,11 +11,11 @@ main = do
   return ()
 
 versionSum :: Packet -> Int
-versionSum (Lit version _ _) = version
+versionSum (Lit version _) = version
 versionSum (Operator version _ ps) = version + (sum $ fmap versionSum ps)
 
 calcValue :: Packet -> Int
-calcValue (Lit _ _ v) = v
+calcValue (Lit _ v) = v
 calcValue (Operator _ 0 ps) = sum $ fmap calcValue ps
 calcValue (Operator _ 1 ps) = product $ fmap calcValue ps
 calcValue (Operator _ 2 ps) = minimum $ fmap calcValue ps
@@ -24,7 +24,7 @@ calcValue (Operator _ 5 [a, b]) = if (calcValue a) > (calcValue b) then 1 else 0
 calcValue (Operator _ 6 [a, b]) = if (calcValue a) < (calcValue b) then 1 else 0
 calcValue (Operator _ 7 [a, b]) = if (calcValue a) == (calcValue b) then 1 else 0
 
-data Packet = Lit { version :: Int, typeID :: Int, value :: Int }
+data Packet = Lit { version :: Int, value :: Int }
             | Operator { version :: Int, typeID :: Int, ps :: [Packet] }
             deriving Show
 
@@ -34,7 +34,7 @@ packetParser = do
   typeID <- fmap toDec $ count 3 binDigit
   if typeID == 4 then do
     (value, l) <- parseValue
-    return $ (6 + l, Lit version typeID (toDec value))
+    return $ (6 + l, Lit version (toDec value))
   else do
     lengthTypeID <- binDigit
     if lengthTypeID == '0' then do
