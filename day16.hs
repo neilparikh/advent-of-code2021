@@ -1,13 +1,14 @@
 import Text.Parsec
 import ParsecUtil
 import Data.Char (digitToInt)
+import Control.Monad (guard)
 
 main :: IO ()
 main = do
   input <- fmap (hexToBinary . head . lines) $ readFile "day16.in"
-  let (Right (_, packet)) = applyParser packetParser input
-  print $ versionSum packet
-  print $ calcValue packet
+  let (Right p) = applyParser packet input
+  print $ versionSum p
+  print $ calcValue p
   return ()
 
 versionSum :: Packet -> Int
@@ -16,53 +17,47 @@ versionSum (Operator version _ ps) = version + (sum $ fmap versionSum ps)
 
 calcValue :: Packet -> Int
 calcValue (Lit _ v) = v
-calcValue (Operator _ 0 ps) = sum $ fmap calcValue ps
-calcValue (Operator _ 1 ps) = product $ fmap calcValue ps
-calcValue (Operator _ 2 ps) = minimum $ fmap calcValue ps
-calcValue (Operator _ 3 ps) = maximum $ fmap calcValue ps
+calcValue (Operator _ 0 ps) = sum (calcValue <$> ps)
+calcValue (Operator _ 1 ps) = product (calcValue <$> ps)
+calcValue (Operator _ 2 ps) = minimum (calcValue <$> ps)
+calcValue (Operator _ 3 ps) = maximum (calcValue <$> ps)
 calcValue (Operator _ 5 [a, b]) = if (calcValue a) > (calcValue b) then 1 else 0
 calcValue (Operator _ 6 [a, b]) = if (calcValue a) < (calcValue b) then 1 else 0
 calcValue (Operator _ 7 [a, b]) = if (calcValue a) == (calcValue b) then 1 else 0
 
-data Packet = Lit { version :: Int, value :: Int }
+data Packet = Lit { version :: Int, v :: Int }
             | Operator { version :: Int, typeID :: Int, ps :: [Packet] }
             deriving Show
 
-packetParser :: Parser (Int, Packet)
-packetParser = do
+packet :: Parser Packet
+packet = do
   version <- fmap toDec $ count 3 binDigit
   typeID <- fmap toDec $ count 3 binDigit
   if typeID == 4 then do
-    (value, l) <- parseValue
-    return $ (6 + l, Lit version (toDec value))
+    v <- toDec <$> value
+    return $ Lit version v
   else do
     lengthTypeID <- binDigit
     if lengthTypeID == '0' then do
       subPacketLength <- fmap toDec $ count 15 binDigit
-      subPackets <- lenSubPacketParser subPacketLength
-      let newLen = 22 + subPacketLength
-      return $ (newLen, Operator version typeID subPackets)
+      startPos <- sourceColumn <$> getPosition
+      subPackets <- manyTill packet $ do
+        endPos <- sourceColumn <$> getPosition
+        guard (endPos - startPos == subPacketLength)
+      return $ Operator version typeID subPackets
     else do
       numSubPackets <- fmap toDec $ count 11 binDigit
-      subPackets <- count numSubPackets packetParser
-      let newLen = 18 + (sum $ fmap fst subPackets)
-      return $ (newLen, Operator version typeID (fmap snd subPackets))
+      subPackets <- count numSubPackets packet
+      return $ Operator version typeID subPackets
 
-lenSubPacketParser :: Int -> Parser [Packet]
-lenSubPacketParser 0 = return []
-lenSubPacketParser n = do
-  (l, p) <- packetParser
-  rest <- lenSubPacketParser (n - l)
-  return (p:rest)
-
-parseValue :: Parser (String, Int)
-parseValue = do
+value :: Parser String
+value = do
   prefix <- binDigit
   d <- count 4 binDigit
   if (prefix == '1') then do
-    (d', n) <- parseValue
-    return (d ++ d', 5 + n)
-  else return (d, 5)
+    d' <- value
+    return $ d ++ d'
+  else return d
 
 toDec :: String -> Int
 toDec = foldl (\acc x -> acc * 2 + digitToInt x) 0
