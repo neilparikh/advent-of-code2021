@@ -1,4 +1,4 @@
-import Util
+import Util (wordsBy, applyNTimes)
 import qualified Data.IntMap.Strict as IM
 import Data.Maybe (fromMaybe)
 
@@ -10,7 +10,7 @@ main = do
   print $ IM.foldr (+) 0 $ applyNTimes 256 sim2 startMap
 
 inputToMap :: [Int] -> IM.IntMap Integer
-inputToMap ls = foldl (\m x -> IM.insertWith (+) x 1 m) IM.empty ls
+inputToMap = foldl (\m x -> IM.insertWith (+) x 1 m) IM.empty
 
 sim :: [Int] -> [Int]
 sim fish = let

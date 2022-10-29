@@ -1,5 +1,5 @@
 import qualified Data.Map.Strict as M
-import Util
+import Util (wordsBy, listToTuple)
 
 main :: IO ()
 main = do
@@ -16,7 +16,7 @@ solve :: [Line] -> Int
 solve = M.size . M.filter (> 1) . foldl markGrid M.empty . fmap genPoints
 
 markGrid :: Grid -> [Point] -> Grid
-markGrid g points = foldl (\m p -> M.insertWith (+) p 1 m) g points
+markGrid = foldl (\m p -> M.insertWith (+) p 1 m)
 
 genPoints :: Line -> [Point]
 genPoints ((x1, y1), (x2, y2)) = zip (genLine x1 x2) (genLine y1 y2)

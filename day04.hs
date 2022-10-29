@@ -1,5 +1,5 @@
-import Data.List
-import Util
+import Data.List (transpose)
+import Util (wordsBy, chunksOf)
 
 main :: IO ()
 main = do
@@ -14,7 +14,7 @@ type Board = [[String]]
 part1 :: [String] -> [Board] -> Int
 part1 (x:xs) boards = let
   boards' = fmap (markBoard x) boards
-  in if (any checkWin boards') then computeScore (read x) (head $ filter checkWin boards') else part1 xs boards'
+  in if any checkWin boards' then computeScore (read x) (head $ filter checkWin boards') else part1 xs boards'
 
 part2 :: [String] -> [Board] -> Int
 part2 (x:xs) [b] = let
