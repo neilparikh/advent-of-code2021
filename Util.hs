@@ -44,6 +44,11 @@ safeHead :: [a] -> Maybe a
 safeHead []    = Nothing
 safeHead (x:_) = Just x
 
+safeAt :: Int -> [a] -> Maybe a
+safeAt _ [] = Nothing
+safeAt 0 (x:xs) = Just x
+safeAt n (_:xs) = safeAt (n - 1) xs
+
 median :: [a] -> a
 median xs
   | null xs = error "Can't find median of empty list"
